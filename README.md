@@ -1,5 +1,5 @@
 
-# <PROJECT NAME> — Triton FlashAttention-Style Scaled Dot Product Attention
+# Triton FlashAttention-Style Scaled Dot Product Attention (with fused RoPE)
 
 Custom [Triton](https://github.com/triton-lang/triton) kernels for Scaled Dot Product Attention (SDPA), including both forward and backward passes, designed for Vision Transformer (ViT)–style workloads and small to medium sequence lengths.
 
@@ -71,6 +71,42 @@ loss.backward()
 print("Output shape:", o.shape)
 print("Grad q mean:", q.grad.float().abs().mean().item())
 ```
+
+### RoPE-enabled Triton FlashAttention
+
+The fused RoPE kernel lives in `rope_flash_attn_kernel.py` and is dispatched
+through `flash_attn.flash_attention`. The baseline (non-RoPE) kernel remains the
+default; pass `impl="fa_rope"` to enable RoPE and supply the cosine/sine table
+expected by the Triton kernel.
+
+```python
+import torch
+from flash_attn import CosSinTable, flash_attention
+
+B, H, N, D = 2, 8, 197, 64
+dtype = torch.bfloat16
+device = "cuda"
+
+q = torch.randn(B, H, N, D, device=device, dtype=dtype, requires_grad=True)
+k = torch.randn_like(q, requires_grad=True)
+v = torch.randn_like(q, requires_grad=True)
+
+cos_sin = CosSinTable(base=10000.0, H_img=14, D=D, device=device)
+o = flash_attention(q, k, v, impl="fa_rope", cos_sin=cos_sin)
+o.sum().backward()
+```
+
+### Benchmarks for fused RoPE
+
+The RoPE-specific benchmark is available in `bench_rope_flash_attn.py` and
+uses the same shapes as the baseline benchmarks by default. For example:
+
+```bash
+python bench_rope_flash_attn.py --batch 1024 --heads 6 --seq 197 --dim 64 --mode fwdbwd
+```
+
+This compares the fused RoPE Triton kernel against the PyTorch SDPA Flash and
+memory-efficient backends, reporting median latency and elements/second.
 
 ## Benchmarks
 
@@ -189,6 +225,18 @@ bench_sdpa_throughput(
 * `bench_sdpa_throughput` measures median latency and effective elements/second for each variant and prints a compact table like the one above.
 
 You can change `dtype`, `(B, H, N, D)`, or `mode` (for example, `"fwd"` or `"bwd"`) to explore other regimes and verify that performance and accuracy behave as expected.
+
+### RoPE benchmark
+
+To benchmark the fused RoPE Triton kernel against PyTorch SDPA backends (with
+RoPE applied on the Python side), run:
+
+```bash
+python bench_rope_flash_attn.py --batch 1024 --heads 6 --seq 197 --dim 64 --mode fwdbwd
+```
+
+The script prints median latency and effective elements/second for each variant,
+mirroring the format of the existing FlashAttention benchmark helpers.
 
 
 ---
