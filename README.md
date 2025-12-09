@@ -196,39 +196,6 @@ The takeaway:
 
 ---
 
-## Reproducing benchmarks and checks
-
-The repo includes small helpers and scripts to reproduce both correctness and throughput numbers. A typical pattern looks like:
-
-```python
-import torch
-from fa_rope_full import CosSinTable, sdpa_triton_fa_rope
-# from triton_flash_attention.triton_utils import compare_sdpa_variants, bench_sdpa_throughput  # if you expose helpers
-
-B, H, H_img, D = 2, 8, 14, 64
-N = 1 + H_img * H_img
-dtype = torch.bfloat16
-device = "cuda"
-
-Q = torch.randn(B, H, N, D, device=device, dtype=dtype, requires_grad=True)
-K = torch.randn_like(Q, requires_grad=True)
-V = torch.randn_like(Q, requires_grad=True)
-
-cos_sin = CosSinTable(base=10000.0, H_img=H_img, D=D, device=device)
-
-# Triton fused RoPE kernel
-def triton_rope(Q, K, V):
-    return sdpa_triton_fa_rope(Q, K, V, cos_sin)
-
-# Example of how you might structure comparisons against PyTorch SDPA backends:
-# compare_sdpa_variants(Q, K, V, triton_rope, kernels=["flash", "mem", "math"])
-# bench_sdpa_throughput(Q, K, V, variants=(triton_rope, "flash", "mem", "math"))
-```
-
-Feel free to adapt the benchmark scripts to your own model shapes, dtypes and batch sizes.
-
----
-
 ## License
 
 This project is licensed under the MIT License.
