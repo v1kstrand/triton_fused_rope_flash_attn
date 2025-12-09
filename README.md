@@ -77,7 +77,7 @@ H_img = 14       # 14 x 14 patch grid
 D = 64           # head dim (must be divisible by 4)
 device = "cuda"
 
-cos_sin = CosSinTable(base=10000.0, H_img=H_img, D=D, device=device)
+cos_sin = CosSinTable(base=100.0, H_img=H_img, D=D, device=device)
 ```
 
 * `CosSinTable` builds **pairwise** RoPE tables:
