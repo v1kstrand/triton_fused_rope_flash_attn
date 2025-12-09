@@ -93,7 +93,7 @@ from fa_rope_full import CosSinTable, sdpa_triton_fa_rope  # adjust import to yo
 
 B, H, H_img, D = 2, 8, 14, 64
 N = 1 + H_img * H_img      # CLS + 2D grid
-dtype = torch.bfloat16
+dtype = torch.float32
 device = "cuda"
 
 q = torch.randn(B, H, N, D, device=device, dtype=dtype, requires_grad=True)
@@ -103,7 +103,8 @@ v = torch.randn_like(q, requires_grad=True)
 cos_sin = CosSinTable(base=10000.0, H_img=H_img, D=D, device=device)
 
 # Fused FlashAttention-style SDPA + 2D RoPE
-o = sdpa_triton_fa_rope(q, k, v, cos_sin)
+with torch.autocast("cuda", dtype=torch.bfloat16):
+    o = sdpa_triton_fa_rope(q, k, v, cos_sin)
 
 loss = o.sum()
 loss.backward()
