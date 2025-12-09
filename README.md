@@ -49,6 +49,26 @@ The goal is to serve both as:
 
 ## Usage
 
+### Getting the latest changes locally
+
+If you cloned this repository before the RoPE support was added, make sure you
+have the latest commit on the active branch:
+
+```bash
+git pull
+```
+
+You should see the RoPE-specific entry points and benchmark script listed at the
+root of the repo:
+
+- `flash_attn.py` — dispatcher exposing `flash_attention(..., impl="fa_rope")`
+  alongside the baseline kernel.
+- `rope_flash_attn_kernel.py` — fused Triton kernel with in-kernel RoPE.
+- `bench_rope_flash_attn.py` — benchmark entry point for the RoPE kernel.
+
+With those files present you are on the updated version that includes fused
+RoPE support.
+
 ### Basic example (drop-in SDPA — Scaled Dot Product Attention)
 
 ```python
@@ -355,7 +375,6 @@ Current limitations:
   * Arbitrary attention masks
   * Dropout
   * Attention bias (for example, relative position bias or Continuous Position Bias)
-  * Rotary Positional Embedding (RoPE — Rotary Positional Embedding)
 
 Potential future extensions:
 * Causal and windowed attention variants.
