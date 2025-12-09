@@ -7,7 +7,8 @@ from torch import nn
 import torch.nn.functional as F
 from torch.nn.attention import SDPBackend, sdpa_kernel
 from itertools import combinations
-from .rope import sdpa_triton_fa_rope, CosSinTable # TODO
+
+from rope_flash_attn_kernel import CosSinTable, sdpa_triton_fa_rope
 
 
 def apply_rot_embed_cat(x, emb) -> torch.Tensor:
