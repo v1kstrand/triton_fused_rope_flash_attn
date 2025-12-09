@@ -10,8 +10,6 @@ from itertools import combinations
 from .rope import sdpa_triton_fa_rope, CosSinTable # TODO
 
 
-
-
 def apply_rot_embed_cat(x, emb) -> torch.Tensor:
     sin_emb, cos_emb = emb.tensor_split(2, -1)
     rot_x = torch.stack([-x[..., 1::2], x[..., ::2]], -1).reshape(x.shape) 
@@ -86,9 +84,6 @@ def compare_sdpa_variants(Q, K, V, triton_kernel, rope_embed, cos_sin, dO=None, 
 # Benchmark
 # -----------------------------
 def bench_sdpa_throughput(
-    Q, K, V,
-    rope_embed,
-    cos_sin,
     B=1024,
     H=6,
     S=197,
@@ -133,7 +128,7 @@ def bench_sdpa_throughput(
     if dO is None:
         dO = torch.randn_like(Q)
         
-    def _triton_sdpa(q, k, v):
+    def _triton_sdpa(q, k, v, dO):
         o = sdpa_triton_fa_rope(q, k, v, cos_sin)
         o.backward(dO.detach())
         
@@ -144,7 +139,7 @@ def bench_sdpa_throughput(
                 "flash": SDPBackend.FLASH_ATTENTION,
             }.get(name, SDPBackend.MATH)
         
-        def _torch_sdpa(q, k, v):
+        def _torch_sdpa(q, k, v, dO):
             with sdpa_kernel(kernel):
                 q, k = rope_hook(q, k, v, rope_embed)
                 out = F.scaled_dot_product_attention(q, k, v)
@@ -156,7 +151,7 @@ def bench_sdpa_throughput(
             fnc,
             backend="inductor",
             mode="max-autotune",
-            fullgraph=True
+            #fullgraph=True
         ) if compile else fnc
             
         # Warmup
@@ -164,8 +159,8 @@ def bench_sdpa_throughput(
             q = Q.detach().clone().requires_grad_(True)
             k = K.detach().clone().requires_grad_(True)
             v = V.detach().clone().requires_grad_(True)
-            with torch.autocast("cuda", dtype=dtype), sdpa_kernel(kernel):
-                runner(q, k, v)
+            with torch.autocast("cuda", dtype=dtype):
+                runner(q, k, v, dO)
         torch.cuda.synchronize()
 
         start = torch.cuda.Event(True)
@@ -180,7 +175,7 @@ def bench_sdpa_throughput(
             if per_step:
                 start.record()
             with torch.autocast("cuda", dtype=dtype):
-                runner(q, k, v)
+                runner(q, k, v, dO)
             if per_step:
                 end.record()
                 end.synchronize()
