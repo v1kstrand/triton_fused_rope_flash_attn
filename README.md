@@ -1,7 +1,3 @@
-Here’s an updated README draft tailored to your fused RoPE kernel, with your correctness + bench numbers wired in and the eager vs compiled story framed honestly but still impressive.
-
----
-
 # Triton FlashAttention-Style Scaled Dot Product Attention with Fused 2D RoPE
 
 Custom [Triton](https://github.com/triton-lang/triton) kernels for Scaled Dot Product Attention (SDPA), including both forward and backward passes, with **fused 2D axial RoPE (Rotary Positional Embedding)** for Vision Transformer (ViT)–style workloads.
