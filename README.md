@@ -128,40 +128,6 @@ python bench_rope_flash_attn.py --batch 1024 --heads 6 --seq 197 --dim 64 --mode
 This compares the fused RoPE Triton kernel against the PyTorch SDPA Flash and
 memory-efficient backends, reporting median latency and elements/second.
 
-## Benchmarks
-
-All benchmarks in this section were run on:
-
-* **Shape:** `(B, H, N, D) = (1024, 6, 197, 64)`
-* **Dtype:** `torch.bfloat16`
-* **Device:** `NVIDIA A100 80GB`
-* **Mode:** forward + backward (`fwdbwd`)
-* **Metric:** median latency over multiple runs, and effective elements/second (attention “elements” processed per second).
-
-We compare:
-
-* `sdpa_triton_fa` — this Triton FlashAttention-style kernel
-* `Torch math` — PyTorch Scaled Dot Product Attention (SDPA — Scaled Dot Product Attention) math backend
-* `Torch mem` — PyTorch SDPA memory-efficient backend
-* `Torch flash` — PyTorch SDPA FlashAttention backend
-
-### Throughput and latency
-
-| Variant          | Latency (ms, median) | Elements / s   |
-| ---------------- | -------------------- | -------------- |
-| `sdpa_triton_fa` | **7.796**            | **1.987×10¹⁰** |
-| Torch math       | 22.238               | 6.967×10⁹      |
-| Torch mem        | 10.781               | 1.437×10¹⁰     |
-| Torch flash      | 8.090                | 1.915×10¹⁰     |
-
-For this ViT (Vision Transformer)-style configuration, the custom Triton kernel is:
-
-* ~**2.9× faster** than the PyTorch math backend
-* ~**1.4× faster** than the PyTorch memory-efficient backend
-* Slightly **faster than PyTorch FlashAttention**, with comparable throughput
-
-(Exact speedups will vary by GPU, driver, and PyTorch/Triton versions.)
-
 ---
 
 ## Correctness
