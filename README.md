@@ -100,7 +100,7 @@ q = torch.randn(B, H, N, D, device=device, dtype=dtype, requires_grad=True)
 k = torch.randn_like(q, requires_grad=True)
 v = torch.randn_like(q, requires_grad=True)
 
-cos_sin = CosSinTable(base=10000.0, H_img=H_img, D=D, device=device)
+cos_sin = CosSinTable(base=100.0, H_img=H_img, D=D, device=device)
 
 # Fused FlashAttention-style SDPA + 2D RoPE
 with torch.autocast("cuda", dtype=torch.bfloat16):
