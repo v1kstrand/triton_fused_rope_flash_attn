@@ -156,7 +156,7 @@ steps: 50
 | Model                      | FA impl        | Batch | Steps | Time / step (ms) |
 | -------------------------- | -------------- | ----- | ----- | ---------------- |
 | vit_small_patch16_rope_224 | Triton RoPE FA | 512   | 50    | 179.5            |
-| vit_small_patch16_rope_224 | Torch RoPE FA  | 512   | 50    | 145.2            |
+| vit_small_patch16_rope_224 | Torch RoPE FA  | 512   | 50    | 210.2            |
 
 So in eager mode the Triton kernel is on the same order of magnitude as PyTorch’s optimized SDPA with RoPE, despite being a fully custom implementation with fused 2D rotations and custom backward.
 
