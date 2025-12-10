@@ -110,7 +110,7 @@ def _attn_fwd(
     softmax_scale: tl.constexpr,    # 1/sqrt(D)
     BLOCK_Q: tl.constexpr,
     BLOCK_KV: tl.constexpr,
-    DTYPE: tl.constexpr,            # compute dtype (e.g., tl.float32 or tl.float16)
+    DTYPE: tl.constexpr,            
     GROUP_M: tl.constexpr,
 ):
     softmax_scale_f = softmax_scale
@@ -1054,8 +1054,6 @@ class TritonAttention(torch.autograd.Function):
             HAS_CLS=int(has_cls),
             softmax_scale=softmax_scale,
             DTYPE=comp_triton,
-            # keep your existing ones here:
-            # BLOCK_Q=..., BLOCK_KV=..., GROUP_M=...
         )
 
         # ---- Save for backward ----
@@ -1137,8 +1135,6 @@ class TritonAttention(torch.autograd.Function):
             softmax_scale=ctx.softmax_scale,
             D2=HEAD_DIM // 2,
             HAS_CLS=int(ctx.has_cls),
-            # plus your existing ones:
-            # BLOCK_Q=..., BLOCK_KV=..., GROUP_M=...
         )
         
         return dQ, dK, dV, None, None, None, None
@@ -1174,3 +1170,4 @@ class CosSinTable(torch.nn.Module):
     
 def sdpa_triton_fa_rope(Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor, cos_sin: CosSinTable):
     return TritonAttention.apply(Q, K, V, cos_sin)
+
