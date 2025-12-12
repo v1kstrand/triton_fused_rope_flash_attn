@@ -1104,8 +1104,6 @@ class TritonAttention(torch.autograd.Function):
             DTYPE=ctx.comp_triton,
             D2=HEAD_DIM // 2,
             HAS_CLS=int(ctx.has_cls),
-            # plus your existing ones:
-            # BLOCK_Q=..., BLOCK_KV=..., GROUP_N=...
         )
         
         dq_grid = lambda meta: (
@@ -1170,4 +1168,5 @@ class CosSinTable(torch.nn.Module):
     
 def sdpa_triton_fa_rope(Q: torch.Tensor, K: torch.Tensor, V: torch.Tensor, cos_sin: CosSinTable):
     return TritonAttention.apply(Q, K, V, cos_sin)
+
 
